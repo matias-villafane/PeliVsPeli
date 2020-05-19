@@ -4,7 +4,7 @@ CREATE TABLE `competencias` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `nombre` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1024 DEFAULT CHARSET=latin1;
+);
 
 LOCK TABLES `competencias` WRITE;
 INSERT INTO `competencias`(nombre) 
@@ -15,3 +15,8 @@ INSERT INTO `competencias`(nombre)
     ('¿Cuál es la película con mejor historia?'),
     ('¿Cuál es la película con mejor animacion?');
 UNLOCK TABLES;
+
+CREATE TABLE `votos` (
+  `id_pelicula` int unsigned NOT NULL,
+  `id_competencia` int unsigned NOT NULL
+);
