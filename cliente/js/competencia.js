@@ -1,5 +1,5 @@
 // Esta es la ip y puerto en que necesitamos que esté el backend disponible
-var server = 'http://localhost:3000';
+var server = 'http://localhost:8080';
 
 function CompetenciasController () {
 
@@ -11,7 +11,7 @@ function CompetenciasController () {
 		// Se obtiene de la api el listado de competencias
 		$.getJSON(server+"/competencias", function (data) {
 				// Se carga la información obtenida en el DOM
-				self.cargarCompetencias(data.resultado);
+				self.cargarCompetencias(data);
 		 });
 	},
 

@@ -1,7 +1,8 @@
 const connection = require('../commons/dbConnection');
+const logger = require('../commons/logger');
 
 function postVotoCompetencia (req, res) {
-    console.log(`/competencias/${req.params.id}/voto`);
+    logger('INFO',req);
     
     if (!req.params.id || !req.body.idPelicula){
         let msg = `Error ID invalido`;
@@ -13,7 +14,9 @@ function postVotoCompetencia (req, res) {
     let sqlPeliculas = `SELECT * FROM pelicula WHERE id = ${req.body.idPelicula}`;
     let sqlInsertVotos = `INSERT INTO votos VALUES (${req.body.idPelicula}, ${req.params.id})`;
     
-    console.log(`SQL:${sqlPeliculas}\nSQL:${sqlCompetencias}\nSQL:${sqlInsertVotos}`);
+    logger('DEBUG',sqlPeliculas);
+    logger('DEBUG',sqlCompetencias);
+    logger('DEBUG',sqlInsertVotos);
 
     connection.query(sqlCompetencias, function(err, competencias) {
         if (err){
@@ -43,7 +46,7 @@ function postVotoCompetencia (req, res) {
                     console.log(message);
                     return res.status(500).send(message);
                 }
-                return res.send('OK')
+                return res.send({resultado:'OK'})
             })
         });
     });
@@ -51,7 +54,7 @@ function postVotoCompetencia (req, res) {
 
 
 function getResultados (req, res) {
-    console.log(`/competencias/${req.params.id}/resultados`);
+    logger('INFO',req);
     
     if (!req.params.id){
         let msg = `Error ID invalido`;
@@ -67,7 +70,8 @@ function getResultados (req, res) {
         ORDER BY votos DESC
         LIMIT 3`;
     
-    console.log(`SQL:${sqlCompetencias}\nSQL:${sqlVotacion}`);
+    logger('DEBUG',sqlCompetencias);
+    logger('DEBUG',sqlVotacion);
 
     connection.query(sqlCompetencias, function(err, competencias) {
         if (err){
@@ -99,7 +103,32 @@ function getResultados (req, res) {
     });
 }
 
+function deleteVotacion (req, res) {
+    logger('INFO',req);
+
+    if (!req.params.id){
+        let msg = `Error ID invalido`;
+        console.log(msg);
+        return res.status(400).send(msg);
+    }
+
+    let sql = `DELETE FROM votos WHERE id_competencia = ${req.params.id}`;
+    // TODO cambiar a baja logica (requiere modificar la tabla)
+    
+    logger('DEBUG',sql);
+
+    connection.query(sql, function(err, resultado) {
+        if (err){
+            let msg = `Error al eliminar ${err.message}`;
+            console.log(msg);
+            return res.status(500).send(msg);
+        }
+        res.status(202).send();
+    });
+}
+
 module.exports = {
     postVotoCompetencia,
-    getResultados
+    getResultados,
+    deleteVotacion
 }
