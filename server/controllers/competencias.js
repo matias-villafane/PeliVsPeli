@@ -126,24 +126,62 @@ function postCompetencias (req, res) {
         return res.status(400).send(msg);
     }
 
-    let genero = !req.body.genero || req.body.genero == 0 ? null : req.body.genero;
-    let director = !req.body.director || req.body.director == 0 ? null : req.body.director;
-    let actor = !req.body.actor || req.body.actor == 0 ? null : req.body.actor;
+    let competencia = {
+        id_genero: !req.body.genero || req.body.genero == 0 ? null : req.body.genero,
+        id_director: !req.body.director || req.body.director == 0 ? null : req.body.director,
+        id_actor: !req.body.actor || req.body.actor == 0 ? null : req.body.actor
+    }
 
+    // TODO Validación al crear una competencia: Para crear una competencia se valida que existan al menos dos competencias con los filtros.
+    let sqlWhere = '';
+    Object.keys(competencia).forEach(key => {
+        if (competencia[key]){
+            switch (key) {
+                case "id_actor":
+                    sqlWhere += sqlWhere.length === 0 ? ' WHERE ' : ' AND ';
+                    sqlWhere += `p.id in (SELECT pelicula_id FROM actor_pelicula WHERE actor_id = ${competencia.id_actor})`;
+                    break;
+                case "id_genero":
+                    sqlWhere += sqlWhere.length === 0 ? ' WHERE ' : ' AND ';
+                    sqlWhere += `p.genero_id = ${competencia.id_genero}`;
+                    break;
+                case "id_director":
+                    sqlWhere += sqlWhere.length === 0 ? ' WHERE ' : ' AND ';
+                    sqlWhere += `p.director in (SELECT nombre FROM director WHERE id = ${competencia.id_director})`;
+                    break;
+                default:
+                    break;
+            }
+        }
+    });
+    
+    let sqlCompetencia = `SELECT count(p.id) as total FROM pelicula p${sqlWhere}`;
+    logger('DEBUG',sqlCompetencia);
 
     let sqlInsert = `INSERT INTO competencias (nombre, id_genero, id_director, id_actor) 
-            VALUES ('${req.body.nombre}',${genero},${director},${actor})`;
-    
+            VALUES ('${req.body.nombre}',${competencia.id_genero},${competencia.id_director},${competencia.id_actor})`;
     logger('DEBUG',sqlInsert);
 
-    connection.query(sqlInsert, function(err, resultado) {
-        if (err) {
-            let msg = err.code == 'ER_DUP_ENTRY' ? `Ya existe una competencia con el nombre: ${req.body.nombre}` : `Error dando de alta competencia ${err.message}`;
-            let status = err.code == 'ER_DUP_ENTRY' ? 422 : 500;
+    connection.query(sqlCompetencia, function(err, resultado) {
+        if (err){
+            let msg = `Error al consultar posible competencia ${err.message}`;
             console.log(msg);
-            return res.status(status).send(msg);
+            return res.status(500).send(msg);
         }
-        return res.status(202).send();
+        if (resultado[0].total < 2){
+            let msg = `No hay suficientes peliculas para generar la competencia con los filtros ingresados`;
+            console.log(msg);
+            return res.status(422).send(msg);
+        }
+        connection.query(sqlInsert, function(err, resultado) {
+            if (err) {
+                let msg = err.code == 'ER_DUP_ENTRY' ? `Ya existe una competencia con el nombre: ${req.body.nombre}` : `Error dando de alta competencia ${err.message}`;
+                let status = err.code == 'ER_DUP_ENTRY' ? 422 : 500;
+                console.log(msg);
+                return res.status(status).send(msg);
+            }
+            return res.status(202).send();
+        });
     });
 }
 
